@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskPay - Register</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f4f4;
+    margin:0;
+}
+.container{
+    max-width:400px;
+    margin:40px auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+h2{
+    text-align:center;
+    color:#0a7cff;
+}
+input{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+    box-sizing:border-box;
+}
+button{
+    width:100%;
+    padding:12px;
+    background:#0a7cff;
+    color:white;
+    border:none;
+    border-radius:5px;
+    font-size:16px;
+}
+a{
+    text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>Create Account</h2>
+
+<input type="text" id="fullName" placeholder="Full Name">
+<input type="email" id="email" placeholder="Email Address">
+<input type="password" id="password" placeholder="Password">
+
+<button id="registerBtn">Create Account</button>
+
+<p style="text-align:center;">
+Already have an account?<br>
+<a href="login.html">Login Here</a>
+</p>
+</div>
+<script type="module">
+import { auth, db } from "./firebase.js";
+
+import {
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    doc,
+    setDoc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const registerBtn = document.getElementById("registerBtn");
+
+registerBtn.addEventListener("click", async () => {
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const fullName = document.getElementById("fullName").value.trim();
+
+    if (!fullName || !email || !password) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    try {
+
+        // Check if this person came through a referral link
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get("ref");
+
+        let referredBy = null;
+
+        if (referralCode) {
+            const inviterRef = doc(db, "users", referralCode);
+            const inviterSnap = await getDoc(inviterRef);
+
+            if (inviterSnap.exists()) {
+                referredBy = referralCode;
+            }
+        }
+
+        // Create Firebase account
+        const userCredential =
+            await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+
+        const user = userCredential.user;
+
+        // Save user information
+        await setDoc(doc(db, "users", user.uid), {
+            name: fullName,
+            email: email,
+            balance: 0,
+            referralCode: user.uid,
+            referredBy: referredBy
+        });
+
+        alert("Account created successfully!");
+
+        window.location.href = "login.html";
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+});
+</script>
+</body>
+</html>
