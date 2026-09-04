@@ -75,43 +75,57 @@ a{
 
 </div>
 
-<script>
+<script type="module">
 
-function login(){
+import { auth } from "./firebase.js";
 
-    let email = document.getElementById("email").value.trim();
-    let password = document.getElementById("password").value;
+import {
+    signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+window.login = async function(){
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const message = document.getElementById("message");
 
     if(email === "" || password === ""){
-        document.getElementById("message").innerText =
-        "Please enter your email and password.";
+        message.innerText = "Please enter your email and password.";
         return;
     }
 
-    let users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
 
-    let user = users.find(function(u){
-        return u.email === email && u.password === password;
-    });
+        const userCredential =
+            await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
 
-    if(user){
+        const user = userCredential.user;
 
-        localStorage.setItem("loggedInUser", JSON.stringify(user));
+        localStorage.setItem(
+            "loggedInUser",
+            JSON.stringify({
+                uid: user.uid,
+                email: user.email
+            })
+        );
 
-        document.getElementById("message").innerText =
-        "Login successful!";
+        message.innerText = "Login successful!";
 
         setTimeout(function(){
             window.location.href = "dashboard.html";
-        },1000);
+        }, 1000);
 
-    }else{
+    } catch(error) {
 
-        document.getElementById("message").innerText =
-        "Invalid email or password.";
+        message.innerText = "Invalid email or password.";
 
     }
-}
+
+};
 
 </script>
 
